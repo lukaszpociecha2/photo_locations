@@ -11,11 +11,8 @@ import org.springframework.orm.jpa.LocalEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.Database;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.web.servlet.ViewResolver;
-import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-import org.springframework.web.servlet.view.InternalResourceViewResolver;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
@@ -24,9 +21,12 @@ import java.util.Map;
 
 @Configuration
 @EnableWebMvc
-@ComponentScan("pl.pociecha")
+@ComponentScan(basePackages = {"pl.pociecha", "pl.pociecha.app", "pl.pociecha.controllers"
+, "pl.pociecha.models", "pl.pociecha.repositories"})
 @EnableTransactionManagement
-public class JpaConfig extends WebMvcConfigurerAdapter {
+public class AppConfig implements WebMvcConfigurer {
+
+    // NOWA KONFIGURACJA
 
     @Bean
     public LocalContainerEntityManagerFactoryBean createEMF(JpaVendorAdapter adapter, DataSource ds) {
@@ -36,11 +36,11 @@ public class JpaConfig extends WebMvcConfigurerAdapter {
 
 
         // properties zastępujemy DataSource, ale poki co zostawiam hibernate'owe
-        /*
         properties.put("javax.persistence.jdbc.url", "jdbc:mysql://localhost:3306/photo_locations?useSSL=false&serverTimezone=UTC");
         properties.put("javax.persistence.jdbc.user", "root");
         properties.put("javax.persistence.jdbc.password", "coderslab");
-        properties.put("javax.persistence.jdbc.driver", "com.mysql.jdbc.Driver");*/
+        properties.put("javax.persistence.jdbc.driver", "com.mysql.jdbc.Driver");
+
 
         // dodana w hibernate
         // properties.put("javax.persistence.schema-generation.database.action", "drop-and-create");
@@ -61,7 +61,7 @@ public class JpaConfig extends WebMvcConfigurerAdapter {
         emf.setPersistenceUnitName("PhotoLocationPersistenceUnit");
         emf.setJpaPropertyMap(properties);
         emf.setJpaVendorAdapter(adapter);
-        emf.setPackagesToScan("pl.pociecha.models");
+        emf.setPackagesToScan("pl.pociecha");
         emf.setDataSource(ds);
         return emf;
     }
@@ -78,7 +78,7 @@ public class JpaConfig extends WebMvcConfigurerAdapter {
     @Bean
     public DataSource createDS() {
         BasicDataSource ds = new BasicDataSource();
-        ds.setUrl("jdbc:mysql://localhost:3306/photo_locations?useSSL=false&amp;serverTimezone=UTC");
+        ds.setUrl("jdbc:mysql://localhost:3306/photo_locations?useSSL=false&serverTimezone=UTC");
         ds.setUsername("root");
         ds.setPassword("coderslab");
         ds.setDriverClassName("com.mysql.jdbc.Driver");
@@ -86,32 +86,20 @@ public class JpaConfig extends WebMvcConfigurerAdapter {
         return ds;
     }
 
-    // zamiast LEMFB daliśmy LocalContainerEntityManagerFactoryBean żeby korzystać z pulla połączeń
-    /*@Bean
-    public LocalEntityManagerFactoryBean entityManagerFactory() {
-        LocalEntityManagerFactoryBean emfb = new LocalEntityManagerFactoryBean();
-        emfb.setPersistenceUnitName("PhotoLocationPersistenceUnit");
-        return emfb;
-    }*/
-
     @Bean
     public JpaTransactionManager transactionManager(EntityManagerFactory emf) {
         JpaTransactionManager tm = new JpaTransactionManager(emf);
         return tm;
     }
 
-    @Override
-    public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configurer) {
-        configurer.enable();
-    }
 
-    @Bean
-    public ViewResolver viewResolver() {
-        InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
-        viewResolver.setPrefix("/WEB-INF/views/");
-        viewResolver.setSuffix(".jsp");
-        return viewResolver;
-    }
+    // STARA KONFIUGRACJA (AKTUALNA UŻYWA LocalContainerEntityManagerFactoryBean
+    // w celu wykorzystania pool'a połączeń
 
-
+    /*@Bean
+    public LocalEntityManagerFactoryBean entityManagerFactory() {
+        LocalEntityManagerFactoryBean emfb = new LocalEntityManagerFactoryBean();
+        emfb.setPersistenceUnitName("PhotoLocationPersistenceUnit");
+        return emfb;
+    }*/
 }
